@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="一个简洁美观的四象限记事工具，支持闹钟提醒">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <title>四象限记事</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            color: white;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .quadrant-select {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            outline: none;
+            cursor: pointer;
+            min-width: 100px;
+        }
+
+        .date-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .day-slider {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .day-slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        .day-item {
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: white;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.2);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .day-item.active {
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .year-month-select {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            cursor: pointer;
+            outline: none;
+            min-width: 120px;
+        }
+
+        .content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .quadrants-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            min-height: 400px;
+        }
+
+        .quadrant {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+        }
+
+        .quadrant:nth-child(1) {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        }
+
+        .quadrant:nth-child(2) {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+        }
+
+        .quadrant:nth-child(3) {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .quadrant:nth-child(4) {
+            background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%);
+        }
+
+        .quadrant:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .quadrant-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .quadrant-content {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            word-wrap: break-word;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .quadrant-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .quadrant-content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+        }
+
+        .note-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .note-item:last-child {
+            border-bottom: none;
+        }
+
+        .note-number {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .note-text {
+            flex: 1;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+        }
+
+        .note-alarm {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 193, 7, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ff9800;
+            transition: all 0.3s ease;
+        }
+
+        .note-alarm:hover {
+            background: rgba(255, 193, 7, 0.8);
+            transform: scale(1.1);
+        }
+
+        .note-edit-btn {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            color: #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .note-edit-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: scale(1.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 380px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .close-btn {
+            background: #f0f0f0;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+
+        .modal-body textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .modal-body textarea:focus {
+            border-color: #667eea;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .char-count.warning {
+            color: #ff9800;
+        }
+
+        .char-count.error {
+            color: #f44336;
+        }
+
+        .alarm-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .alarm-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .alarm-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .alarm-input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .alarm-input:focus {
+            border-color: #667eea;
+        }
+
+        .alarm-input[type="time"] {
+            text-align: center;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .fullscreen-quadrant {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .fullscreen-quadrant.active {
+            display: flex;
+        }
+
+        .fullscreen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .fullscreen-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .fullscreen-add-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .fullscreen-content {
+            flex: 1;
+            font-size: 16px;
+            color: white;
+            line-height: 1.8;
+            word-wrap: break-word;
+            overflow-y: auto;
+        }
+
+        .fullscreen-note-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .fullscreen-note-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .fullscreen-note-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .fullscreen-note-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .fullscreen-note-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .fullscreen-note-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        .fullscreen-note-btn.edit {
+            background: rgba(102, 126, 234, 0.5);
+        }
+
+        .fullscreen-note-btn.delete {
+            background: rgba(244, 67, 54, 0.5);
+        }
+
+        .fullscreen-note-btn.alarm {
+            background: rgba(255, 193, 7, 0.5);
+        }
+
+        .fullscreen-note-alarm-info {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 8px;
+            padding: 5px 10px;
+            background: rgba(255, 193, 7, 0.2);
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .fullscreen-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            padding: 20px;
+        }
+
+        .footer-link {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .history-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 375px) {
+            .container {
+                border-radius: 15px;
+            }
+
+            .quadrant {
+                min-height: 150px;
+                padding: 10px;
+            }
+
+            .quadrant-content {
+                max-height: 90px;
+            }
+
+            .search-input, .quadrant-select {
+                font-size: 13px;
+                padding: 10px 12px;
+            }
+
+            .day-item {
+                padding: 6px 10px;
+                font-size: 12px;
+                min-width: 45px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .quadrant {
+                min-height: 130px;
+            }
+
+            .quadrant-title {
+                font-size: 12px;
+            }
+
+            .quadrant-content {
+                font-size: 12px;
+                max-height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="搜索关键词..." id="searchInput">
+                <select class="quadrant-select" id="quadrantSelect">
+                    <option value="">全部象限</option>
+                    <option value="important-urgent">重要紧急</option>
+                    <option value="important-not-urgent">重要不紧急</option>
+                    <option value="not-important-urgent">不重要紧急</option>
+                    <option value="not-important-not-urgent">不重要不紧急</option>
+                </select>
+            </div>
+            <div class="date-selector">
+                <div class="day-slider" id="daySlider">
+                </div>
+                <select class="year-month-select" id="yearMonthSelect">
+                </select>
+            </div>
+        </div>
+        <div class="content">
+            <div class="quadrants-grid" id="quadrantsGrid">
+                <div class="quadrant" data-quadrant="important-urgent">
+                    <div class="quadrant-title">重要紧急</div>
+                    <div class="quadrant-content"></div>
+                </div>
+                <div class="quadrant" data-quadrant="important-not-urgent">
+                    <div class="quadrant-title">重要不紧急</div>
+                    <div class="quadrant-content"></div>
+                </div>
+                <div class="quadrant" data-quadrant="not-important-urgent">
+                    <div class="quadrant-title">不重要紧急</div>
+                    <div class="quadrant-content"></div>
+                </div>
+                <div class="quadrant" data-quadrant="not-important-not-urgent">
+                    <div class="quadrant-title">不重要不紧急</div>
+                    <div class="quadrant-content"></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-link">
+            <a href="javascript:void(0)" class="history-link" onclick="openHistoryFolder()">📁 点击打开历史记录文件</a>
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">编辑内容</div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="editTextarea" placeholder="输入内容..." maxlength="1000"></textarea>
+                <div class="char-count" id="charCount">0/1000</div>
+                <div class="alarm-section">
+                    <div class="alarm-title">⏰ 闹钟提醒</div>
+                    <div class="alarm-inputs">
+                        <input type="time" class="alarm-input" id="alarmTime" placeholder="设置时间">
+                        <button class="btn btn-secondary" onclick="toggleAlarm()" id="alarmToggle">启用</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveContent()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editNoteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="editNoteModalTitle">编辑记事</div>
+                <button class="close-btn" onclick="closeEditNoteModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="editNoteTextarea" placeholder="输入内容..." maxlength="1000"></textarea>
+                <div class="char-count" id="editCharCount">0/1000</div>
+                <div class="alarm-section">
+                    <div class="alarm-title">⏰ 闹钟提醒</div>
+                    <div class="alarm-inputs">
+                        <input type="time" class="alarm-input" id="editAlarmTime" placeholder="设置时间">
+                        <button class="btn btn-secondary" onclick="toggleEditAlarm()" id="editAlarmToggle">启用</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="deleteNote()">删除</button>
+                <button class="btn btn-secondary" onclick="closeEditNoteModal()">取消</button>
+                <button class="btn btn-primary" onclick="updateNote()">更新</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fullscreen-quadrant" id="fullscreenQuadrant">
+        <div class="fullscreen-header">
+            <div class="fullscreen-title" id="fullscreenTitle">象限名称</div>
+            <div style="display: flex; gap: 10px;">
+                <button class="fullscreen-add-btn" onclick="openFullscreenAddModal()">+ 新增</button>
+                <button class="fullscreen-close" onclick="closeFullscreen()">×</button>
+            </div>
+        </div>
+        <div class="fullscreen-content" id="fullscreenContent"></div>
+    </div>
+
+    <script>
+        const QUADRANT_NAMES = {
+            'important-urgent': '重要紧急',
+            'important-not-urgent': '重要不紧急',
+            'not-important-urgent': '不重要紧急',
+            'not-important-not-urgent': '不重要不紧急'
+        };
+
+        const QUADRANT_COLORS = {
+            'important-urgent': 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            'important-not-urgent': 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+            'not-important-urgent': 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+            'not-important-not-urgent': 'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)'
+        };
+
+        let currentQuadrant = null;
+        let currentNoteId = null;
+        let lastClickTime = 0;
+        let clickTimeout = null;
+        let alarmEnabled = false;
+        let editAlarmEnabled = false;
+        let notificationPermission = false;
+        let isFullscreenMode = false;
+
+        function init() {
+            initDatePickers();
+            initEventListeners();
+            requestNotificationPermission();
+            loadAndDisplayData();
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    notificationPermission = permission === 'granted';
+                });
+            }
+        }
+
+        function initDatePickers() {
+            const today = new Date();
+            const yearMonthSelect = document.getElementById('yearMonthSelect');
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth() + 1;
+            const currentDay = today.getDate();
+
+            for (let year = currentYear - 5; year <= currentYear + 5; year++) {
+                for (let month = 1; month <= 12; month++) {
+                    const option = document.createElement('option');
+                    option.value = `${year}-${month.toString().padStart(2, '0')}`;
+                    option.textContent = `${year}年${month}月`;
+                    if (year === currentYear && month === currentMonth) {
+                        option.selected = true;
+                    }
+                    yearMonthSelect.appendChild(option);
+                }
+            }
+
+            updateDaySlider(currentYear, currentMonth, currentDay);
+            yearMonthSelect.addEventListener('change', function() {
+                const [year, month] = this.value.split('-');
+                updateDaySlider(parseInt(year), parseInt(month), 1);
+            });
+        }
+
+        function updateDaySlider(year, month, defaultDay) {
+            const daySlider = document.getElementById('daySlider');
+            daySlider.innerHTML = '';
+
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayItem = document.createElement('div');
+                dayItem.className = 'day-item';
+                dayItem.dataset.day = day;
+                dayItem.textContent = day;
+                if (day === defaultDay) {
+                    dayItem.classList.add('active');
+                }
+                dayItem.addEventListener('click', function() {
+                    document.querySelectorAll('.day-item').forEach(d => d.classList.remove('active'));
+                    this.classList.add('active');
+                    loadAndDisplayData();
+                });
+                daySlider.appendChild(dayItem);
+            }
+
+            const activeDay = daySlider.querySelector('.day-item.active');
+            if (activeDay) {
+                activeDay.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+            }
+        }
+
+        function initEventListeners() {
+            document.getElementById('searchInput').addEventListener('input', debounce(loadAndDisplayData, 300));
+            document.getElementById('quadrantSelect').addEventListener('change', loadAndDisplayData);
+            document.getElementById('yearMonthSelect').addEventListener('change', loadAndDisplayData);
+
+            document.querySelectorAll('.quadrant').forEach(quadrant => {
+                quadrant.addEventListener('click', handleQuadrantClick);
+            });
+
+            document.getElementById('editTextarea').addEventListener('input', updateCharCount);
+            document.getElementById('editNoteTextarea').addEventListener('input', updateEditCharCount);
+        }
+
+        function handleQuadrantClick(e) {
+            const quadrant = e.currentTarget;
+            const quadrantType = quadrant.dataset.quadrant;
+            const now = Date.now();
+
+            if (now - lastClickTime < 300) {
+                clearTimeout(clickTimeout);
+                openFullscreen(quadrantType);
+                lastClickTime = 0;
+            } else {
+                clickTimeout = setTimeout(() => {
+                    openEditModal(quadrantType);
+                }, 300);
+                lastClickTime = now;
+            }
+        }
+
+        function getCurrentFilters() {
+            const searchKeyword = sanitizeInput(document.getElementById('searchInput').value);
+            const selectedQuadrant = document.getElementById('quadrantSelect').value;
+            const selectedYearMonth = document.getElementById('yearMonthSelect').value;
+            const activeDayItem = document.querySelector('.day-item.active');
+            const selectedDay = activeDayItem ? activeDayItem.dataset.day : '';
+
+            return { searchKeyword, selectedQuadrant, selectedYearMonth, selectedDay };
+        }
+
+        function loadAndDisplayData() {
+            const { searchKeyword, selectedQuadrant, selectedYearMonth, selectedDay } = getCurrentFilters();
+            const allData = getAllData();
+
+            document.querySelectorAll('.quadrant').forEach(quadrant => {
+                const quadrantType = quadrant.dataset.quadrant;
+                const contentDiv = quadrant.querySelector('.quadrant-content');
+                
+                let filteredData = allData.filter(item => {
+                    const itemDate = item.date;
+                    const itemYearMonth = item.date.substring(0, 7);
+                    const itemDay = item.date.substring(8, 10);
+                    
+                    const matchesQuadrant = !selectedQuadrant || item.quadrant === selectedQuadrant;
+                    const matchesYearMonth = !selectedYearMonth || itemYearMonth === selectedYearMonth;
+                    const matchesDay = !selectedDay || itemDay === selectedDay.padStart(2, '0');
+                    const matchesSearch = !searchKeyword || 
+                        (item.content && item.content.toLowerCase().includes(searchKeyword.toLowerCase()));
+
+                    return matchesQuadrant && matchesYearMonth && matchesDay && matchesSearch;
+                });
+
+                const quadrantData = filteredData.filter(item => item.quadrant === quadrantType);
+                
+                if (quadrantData.length > 0) {
+                    contentDiv.innerHTML = quadrantData.map((item, index) => 
+                        `<div class="note-item">
+                            <div class="note-number">${index + 1}</div>
+                            <div class="note-text">${escapeHtml(item.content)}</div>
+                            <div class="note-edit-btn" onclick="event.stopPropagation(); openEditNoteModal('${item.id}', '${escapeHtml(item.content)}', '${quadrantType}', '${item.alarmTime || ''}')">✎</div>
+                        </div>`
+                    ).join('');
+                } else {
+                    contentDiv.innerHTML = '<div class="empty-state">暂无内容</div>';
+                }
+            });
+        }
+
+        function getAllData() {
+            try {
+                const data = localStorage.getItem('quadrantNotes');
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                console.error('读取数据失败:', e);
+                return [];
+            }
+        }
+
+        function saveData(data) {
+            try {
+                localStorage.setItem('quadrantNotes', JSON.stringify(data));
+            } catch (e) {
+                console.error('保存数据失败:', e);
+                alert('保存失败，请检查存储空间');
+            }
+        }
+
+        function openEditModal(quadrantType) {
+            currentQuadrant = quadrantType;
+            alarmEnabled = false;
+            const modal = document.getElementById('editModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const textarea = document.getElementById('editTextarea');
+            const alarmTime = document.getElementById('alarmTime');
+            const alarmToggle = document.getElementById('alarmToggle');
+
+            modalTitle.textContent = QUADRANT_NAMES[quadrantType];
+            textarea.value = '';
+            alarmTime.value = '';
+            alarmToggle.textContent = '启用';
+            alarmToggle.className = 'btn btn-secondary';
+            updateCharCount();
+            modal.classList.add('active');
+            textarea.focus();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('active');
+            currentQuadrant = null;
+            alarmEnabled = false;
+        }
+
+        function toggleAlarm() {
+            alarmEnabled = !alarmEnabled;
+            const alarmToggle = document.getElementById('alarmToggle');
+            const alarmTime = document.getElementById('alarmTime');
+
+            if (alarmEnabled) {
+                alarmToggle.textContent = '已启用';
+                alarmToggle.className = 'btn btn-success';
+                alarmTime.disabled = false;
+            } else {
+                alarmToggle.textContent = '启用';
+                alarmToggle.className = 'btn btn-secondary';
+                alarmTime.value = '';
+            }
+        }
+
+        function saveContent() {
+            if (!currentQuadrant) return;
+
+            const textarea = document.getElementById('editTextarea');
+            const content = textarea.value.trim();
+
+            if (!content) {
+                alert('请输入内容');
+                return;
+            }
+
+            if (content.length > 1000) {
+                alert('内容不能超过1000个字符');
+                return;
+            }
+
+            const { selectedYearMonth, selectedDay } = getCurrentFilters();
+            const selectedDate = selectedYearMonth && selectedDay ? 
+                `${selectedYearMonth}-${selectedDay.padStart(2, '0')}` : 
+                new Date().toISOString().split('T')[0];
+
+            const alarmTime = alarmEnabled ? document.getElementById('alarmTime').value : null;
+
+            const newNote = {
+                id: Date.now().toString(),
+                quadrant: currentQuadrant,
+                content: content,
+                date: selectedDate,
+                alarmTime: alarmTime,
+                createdAt: new Date().toISOString()
+            };
+
+            if (alarmTime) {
+                scheduleAlarm(newNote.id, alarmTime, content);
+            }
+
+            const allData = getAllData();
+            allData.push(newNote);
+            saveData(allData);
+
+            closeModal();
+            
+            if (isFullscreenMode) {
+                const quadrantType = document.getElementById('fullscreenTitle').textContent;
+                const quadrantKey = Object.keys(QUADRANT_NAMES).find(key => QUADRANT_NAMES[key] === quadrantType);
+                openFullscreen(quadrantKey);
+            } else {
+                loadAndDisplayData();
+            }
+        }
+
+        function openEditNoteModal(noteId, content, quadrantType, alarmTime = '') {
+            currentNoteId = noteId;
+            currentQuadrant = quadrantType;
+            editAlarmEnabled = !!alarmTime;
+            const modal = document.getElementById('editNoteModal');
+            const modalTitle = document.getElementById('editNoteModalTitle');
+            const textarea = document.getElementById('editNoteTextarea');
+            const editAlarmTime = document.getElementById('editAlarmTime');
+            const editAlarmToggle = document.getElementById('editAlarmToggle');
+
+            modalTitle.textContent = QUADRANT_NAMES[quadrantType];
+            textarea.value = content;
+            editAlarmTime.value = alarmTime;
+            
+            if (editAlarmEnabled) {
+                editAlarmToggle.textContent = '已启用';
+                editAlarmToggle.className = 'btn btn-success';
+            } else {
+                editAlarmToggle.textContent = '启用';
+                editAlarmToggle.className = 'btn btn-secondary';
+            }
+            
+            updateEditCharCount();
+            modal.classList.add('active');
+            textarea.focus();
+        }
+
+        function closeEditNoteModal() {
+            const modal = document.getElementById('editNoteModal');
+            modal.classList.remove('active');
+            currentNoteId = null;
+            currentQuadrant = null;
+            editAlarmEnabled = false;
+        }
+
+        function toggleEditAlarm() {
+            editAlarmEnabled = !editAlarmEnabled;
+            const editAlarmToggle = document.getElementById('editAlarmToggle');
+            const editAlarmTime = document.getElementById('editAlarmTime');
+
+            if (editAlarmEnabled) {
+                editAlarmToggle.textContent = '已启用';
+                editAlarmToggle.className = 'btn btn-success';
+                editAlarmTime.disabled = false;
+            } else {
+                editAlarmToggle.textContent = '启用';
+                editAlarmToggle.className = 'btn btn-secondary';
+                editAlarmTime.value = '';
+            }
+        }
+
+        function updateNote() {
+            if (!currentNoteId || !currentQuadrant) return;
+
+            const textarea = document.getElementById('editNoteTextarea');
+            const content = textarea.value.trim();
+
+            if (!content) {
+                alert('请输入内容');
+                return;
+            }
+
+            if (content.length > 1000) {
+                alert('内容不能超过1000个字符');
+                return;
+            }
+
+            const alarmTime = editAlarmEnabled ? document.getElementById('editAlarmTime').value : null;
+
+            const allData = getAllData();
+            const noteIndex = allData.findIndex(item => item.id === currentNoteId);
+
+            if (noteIndex !== -1) {
+                allData[noteIndex].content = content;
+                allData[noteIndex].alarmTime = alarmTime;
+                allData[noteIndex].updatedAt = new Date().toISOString();
+                saveData(allData);
+
+                if (alarmTime) {
+                    scheduleAlarm(currentNoteId, alarmTime, content);
+                }
+            }
+
+            closeEditNoteModal();
+            
+            if (isFullscreenMode) {
+                const quadrantType = document.getElementById('fullscreenTitle').textContent;
+                const quadrantKey = Object.keys(QUADRANT_NAMES).find(key => QUADRANT_NAMES[key] === quadrantType);
+                openFullscreen(quadrantKey);
+            } else {
+                loadAndDisplayData();
+            }
+        }
+
+        function deleteNote() {
+            if (!currentNoteId) return;
+
+            if (confirm('确定要删除这条记事吗？')) {
+                const allData = getAllData();
+                const filteredData = allData.filter(item => item.id !== currentNoteId);
+                saveData(filteredData);
+
+                closeEditNoteModal();
+                loadAndDisplayData();
+            }
+        }
+
+        function openFullscreen(quadrantType) {
+            const fullscreen = document.getElementById('fullscreenQuadrant');
+            const title = document.getElementById('fullscreenTitle');
+            const content = document.getElementById('fullscreenContent');
+
+            isFullscreenMode = true;
+            title.textContent = QUADRANT_NAMES[quadrantType];
+            fullscreen.style.background = QUADRANT_COLORS[quadrantType];
+
+            const { searchKeyword, selectedYearMonth, selectedDay } = getCurrentFilters();
+            const allData = getAllData();
+
+            const filteredData = allData.filter(item => {
+                const itemDate = item.date;
+                const itemYearMonth = item.date.substring(0, 7);
+                const itemDay = item.date.substring(8, 10);
+                
+                return item.quadrant === quadrantType && 
+                       (!selectedYearMonth || itemYearMonth === selectedYearMonth) &&
+                       (!selectedDay || itemDay === selectedDay.padStart(2, '0')) &&
+                       (!searchKeyword || item.content.toLowerCase().includes(searchKeyword.toLowerCase()));
+            });
+
+            if (filteredData.length > 0) {
+                const { selectedDay } = getCurrentFilters();
+                content.innerHTML = filteredData.map((item, index) => 
+                    `<div class="fullscreen-note-item">
+                        <div class="fullscreen-note-header">
+                            <span class="fullscreen-note-number">${index + 1}</span>
+                            <div class="fullscreen-note-actions">
+                                <button class="fullscreen-note-btn edit" onclick="openEditNoteModal('${item.id}', '${escapeHtml(item.content)}', '${quadrantType}', '${item.alarmTime || ''}')">编辑</button>
+                                <button class="fullscreen-note-btn delete" onclick="deleteFullscreenNote('${item.id}')">删除</button>
+                            </div>
+                        </div>
+                        <div>${escapeHtml(item.content)}</div>
+                        ${item.alarmTime ? `<div class="fullscreen-note-alarm-info">⏰ 提醒时间: ${selectedDay}日 ${item.alarmTime}</div>` : ''}
+                    </div>`
+                ).join('');
+            } else {
+                content.innerHTML = '<div class="empty-state" style="color: white;">暂无内容</div>';
+            }
+
+            fullscreen.classList.add('active');
+        }
+
+        function closeFullscreen() {
+            const fullscreen = document.getElementById('fullscreenQuadrant');
+            fullscreen.classList.remove('active');
+            isFullscreenMode = false;
+        }
+
+        function openFullscreenAddModal() {
+            const quadrantType = document.getElementById('fullscreenTitle').textContent;
+            const quadrantKey = Object.keys(QUADRANT_NAMES).find(key => QUADRANT_NAMES[key] === quadrantType);
+            openEditModal(quadrantKey);
+        }
+
+        function deleteFullscreenNote(noteId) {
+            if (confirm('确定要删除这条记事吗？')) {
+                const allData = getAllData();
+                const filteredData = allData.filter(item => item.id !== noteId);
+                saveData(filteredData);
+                loadAndDisplayData();
+                const quadrantType = document.getElementById('fullscreenTitle').textContent;
+                const quadrantKey = Object.keys(QUADRANT_NAMES).find(key => QUADRANT_NAMES[key] === quadrantType);
+                openFullscreen(quadrantKey);
+            }
+        }
+
+        function scheduleAlarm(noteId, alarmTime, content) {
+            if (!notificationPermission) {
+                alert('请允许通知权限以接收闹钟提醒');
+                return;
+            }
+
+            const [hours, minutes] = alarmTime.split(':');
+            const now = new Date();
+            const alarmDate = new Date();
+            alarmDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+            if (alarmDate <= now) {
+                alarmDate.setDate(alarmDate.getDate() + 1);
+            }
+
+            const timeout = alarmDate.getTime() - now.getTime();
+            setTimeout(() => {
+                new Notification('四象限记事提醒', {
+                    body: content,
+                    icon: '📝'
+                });
+            }, timeout);
+        }
+
+        function setAlarm(noteId, alarmTime) {
+            const allData = getAllData();
+            const note = allData.find(item => item.id === noteId);
+            if (note) {
+                scheduleAlarm(noteId, alarmTime, note.content);
+                alert(`闹钟已设置，将在 ${alarmTime} 提醒您`);
+            }
+        }
+
+        function updateCharCount() {
+            const textarea = document.getElementById('editTextarea');
+            const charCount = document.getElementById('charCount');
+            const length = textarea.value.length;
+            
+            charCount.textContent = `${length}/1000`;
+            
+            if (length >= 900) {
+                charCount.className = 'char-count warning';
+            } else if (length >= 1000) {
+                charCount.className = 'char-count error';
+            } else {
+                charCount.className = 'char-count';
+            }
+        }
+
+        function updateEditCharCount() {
+            const textarea = document.getElementById('editNoteTextarea');
+            const charCount = document.getElementById('editCharCount');
+            const length = textarea.value.length;
+            
+            charCount.textContent = `${length}/1000`;
+            
+            if (length >= 900) {
+                charCount.className = 'char-count warning';
+            } else if (length >= 1000) {
+                charCount.className = 'char-count error';
+            } else {
+                charCount.className = 'char-count';
+            }
+        }
+
+        function sanitizeInput(input) {
+            if (typeof input !== 'string') return '';
+            return input.replace(/[<>]/g, '');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function padStart(str, length, char) {
+            str = String(str);
+            while (str.length < length) {
+                str = char + str;
+            }
+            return str;
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker注册成功:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker注册失败:', error);
+                    });
+            });
+        }
+
+        function openHistoryFolder() {
+            const allData = getAllData();
+            
+            if (allData.length === 0) {
+                alert('暂无历史记录');
+                return;
+            }
+
+            const dataStr = JSON.stringify(allData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `四象限记事历史_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

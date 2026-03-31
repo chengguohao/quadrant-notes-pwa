@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#667eea"/>
+  <rect x="100" y="80" width="312" height="352" rx="20" fill="white"/>
+  <rect x="140" y="120" width="232" height="272" rx="15" fill="#667eea"/>
+  <rect x="160" y="150" width="80" height="80" rx="10" fill="#ff9a9e"/>
+  <rect x="260" y="150" width="80" height="80" rx="10" fill="#a18cd1"/>
+  <rect x="160" y="250" width="80" height="80" rx="10" fill="#84fab0"/>
+  <rect x="260" y="250" width="80" height="80" rx="10" fill="#fccb90"/>
+  <text x="256" y="440" font-size="40" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">四象限</text>
+</svg>
