@@ -2,7 +2,7 @@
   "name": "四象限记事",
   "short_name": "四象限记事",
   "description": "一个简洁美观的四象限记事工具，支持闹钟提醒",
-  "start_url": "/quadrant-notes.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
@@ -26,7 +26,7 @@
       "name": "新增记事",
       "short_name": "新增",
       "description": "快速新增一条记事",
-      "url": "/quadrant-notes.html",
+      "url": "/index.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]

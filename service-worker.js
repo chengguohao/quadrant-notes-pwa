@@ -1,7 +1,7 @@
 const CACHE_NAME = 'quadrant-notes-cache-v1';
 const urlsToCache = [
     '/',
-    '/quadrant-notes.html',
+    '/index.html',
     '/manifest.json',
     '/icon.svg'
 ];
